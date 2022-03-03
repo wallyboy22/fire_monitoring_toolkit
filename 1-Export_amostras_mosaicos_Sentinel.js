@@ -1,6 +1,22 @@
+// 1-Export_amostras_mosaicos_Sentinel.js -> toolkit de visualização de
+// multiplos dados do sensoriamento remoto voltados para o monitoramento
+// de fogo no Brasil 
+
+// Author: Wallace Silva e Vera Laísa 
+// Institution: IPAM
+
+//__________________________________________________________________________________________________________
+// 1.0 - 02/03/2022 - Primeira versão sistematizada - https://code.earthengine.google.com/5d0c6ec188b717d8892b4abd497bb4e2
+// 1.1 - 03/03/2022 - O modulo de thumbnails ".setThumbs()" foi desinstalado e no lugar foi desenvolvido e instalado o "plotThumbnails",
+// disparado na atualização do painel - https://code.earthengine.google.com/74d93ccd773c05f8c7004abd6aaa2c4c
+
+
+//__________________________________________________________________________________________________________
+
+
 // --- --- --- INITIAL INPUTS AND CACHE MEMORY
 var options = {
-  // --- set start options
+  // --- --- opções pré carregadas na interface
   region_table:'Regioes',
   region:'Pantanal_r1',
   year:2019, 
@@ -12,47 +28,58 @@ var options = {
   
   dimensions:512,
   openThumbs:false,
-  // --- set dev options
+  
+  // --- Este toolkit funciona com base em funções que percorrem listas acessando datasets, 
+  // esta sessão é feita para o gerenciamento dessas listas
+  
+  // - assets de cicatrizes pre-processadas em uma unica imagem, com bandas anuais.
   scar_images: [
     // 'mcd64a1', 'fire_cci','firms',
     'MapBiomas Colecao 1',
     // 'INPE focos de calor',
     'MapBiomas Fogo mensal s2 (v2)'
   ],
+  // - 
   hotspot: [
     'BUFFER-FOCUS',
   ],
+  // - assets de cicatrizes pre-processadas em uma unica imagem, com bandas anuais
   models: [
     // 'monthly',
     // 'burned_cover','acumulated','acumulated_cover','frequency', 'synYearFire',
     'ano',
   ],
+  // - coleções de imagens de satélites
   collection_sr: [
     // 'terra','aqua','landsat_4',// 'landsat_7'
     'landsat_5','landsat_8','sentinel_2',
     // 'planet',
   ],
+  // - coleções de imagens de cicatrizes de fogo
   collection_scar:[
     'MCD64A1','FIRMS', 'FIRE_CCI','MapBiomas Fogo Sentinel 2 (v1)',
     'MapBiomas Fogo Sentinel 2 (v2)','MapBiomas Fogo mensal Sentinel 2 (v2)',
   ],
+  // - vetores transformados em linha -> auxiliar
   region_vis: [
-    'line','lines'/*,'square'*/
+    'line','lines','Quadriculas'/*,'square'*/
   ],
-
+  
+  // -> vetores utilizados na seleção da região  
   auxiliar: [
-    'Paises','Biomas','Regioes','Estados','Municipios','UC','Landsat_tile','Estudo de caso'/*,'Tela'*/
+    'Paises','Biomas','Regioes','Estados','Municipios','UC','Landsat_tile','Quadriculas','Estudo de caso'/*,'Tela'*/
   ],
 
-
+  // -> bandas exportadas no mosaico
   bands_export:[
     'red','nir','swir1','swir2', 'landcover' // manter o landcover como ultima variavel da lista
     ],
-    
+  
+  // -> lista com imagens endereço de imagens bloqueadas 
   blockList_landsat: require('users/geomapeamentoipam/GT_Fogo_MapBiomas:2_Colecao_1.0_2021/module-blockList').blockList(),
   blockList_sentinel: require('users/geomapeamentoipam/GT_Fogo_MapBiomas:3- Monitoramento Fogo/module-blockList-sentinel_2').blockList(),
   
-  // --- set chache options
+  // --- Layers que devem ja vir ligadas
   // - (on layers)
   'Limite':true,
   // sentinel_2:true,
@@ -63,6 +90,7 @@ var options = {
 };
 
 var dataset = {
+  // --- --- --- DATASETS ARMAZENADOS EM OBJETOS
   // --- --- raster
   // --- modelos de cicatrizes em images, com bandas armazenadas anualmente 
   'MapBiomas Colecao 1':{
@@ -487,7 +515,7 @@ var dataset = {
   'MapBiomas Fogo mensal s2 (v1)':{
     'ano':{
     image: ee.ImageCollection([
-      [2019,2021].map(function(year){
+      [2019,2021,2022].map(function(year){
         
         var year_col =  ee.ImageCollection("users/geomapeamentoipam/Colecao_fogo_sentinel_mensal_v2")
           .filter(ee.Filter.eq('year',year))
@@ -505,7 +533,7 @@ var dataset = {
     },
     monthly:{
     image: ee.ImageCollection([
-      [2019,2021].map(function(year){
+      [2019,2021,2022].map(function(year){
         
         var year_col =  ee.ImageCollection("users/geomapeamentoipam/Colecao_fogo_sentinel_mensal_v2")
           .filter(ee.Filter.eq('year',year));
@@ -543,7 +571,7 @@ var dataset = {
     },
     period:{
       start:2018,
-      end:2021
+      end:2023
     }
   },
 
@@ -559,7 +587,7 @@ var dataset = {
       },
     period:{
       start:2000,
-      end:2021
+      end:2023
     },
   },
   'BUFFER-FOCUS':{
@@ -575,14 +603,14 @@ var dataset = {
           });
         }),
       visParams:{
-        min:0,
-        max:12,
-        palette:['000000','ffffff'],
+        min:1,
+        max:1,
+        palette:['000000'/*,'ffffff'*/],
         bands:['inpe-focus']
       },
     period:{
       start:2000,
-      end:2021
+      end:2023
     },
   
   },
@@ -598,7 +626,7 @@ var dataset = {
       },
     period:{
       start:2000,
-      end:2021
+      end:2023
     },
   },
   FIRE_CCI:{
@@ -626,7 +654,7 @@ var dataset = {
       },
     period:{
       start:2019,
-      end:2021
+      end:2023
     }
   },
   'MapBiomas Fogo Sentinel 2 (v2)':{
@@ -640,7 +668,7 @@ var dataset = {
       },
     period:{
       start:2019,
-      end:2021
+      end:2023
     }
   },  
   'MapBiomas Fogo mensal Sentinel 2 (v2)':{
@@ -669,7 +697,7 @@ var dataset = {
       },
     period:{
       start:2019,
-      end:2021
+      end:2023
     }
   },
 
@@ -683,7 +711,7 @@ var dataset = {
       },
     period:{
       start:2000,
-      end:2021
+      end:2023
     },
   },
   aqua:{
@@ -695,7 +723,7 @@ var dataset = {
       },
     period:{
       start:2002,
-      end:2021
+      end:2023
     },
   },
   landsat_4:{
@@ -770,7 +798,7 @@ var dataset = {
     },
     period:{
     start:1999,
-    end:2021
+    end:2023
   },
   },
   landsat_8:{
@@ -795,7 +823,32 @@ var dataset = {
       },
     period:{
       start:2013,
-      end:2021
+      end:2023
+    }
+  },
+  landsat_9:{
+    collection:ee.ImageCollection('LANDSAT/LC09/C02/T1_L2') // -> atualizar para dados de superficie de reflectancia quando disponivel
+      .filter(ee.Filter.inList('system:index', options.blockList_landsat).not())
+      .map(function (image){ return image.updateMask(ee.Image().paint(image.geometry().buffer(-3000)).eq(0))})
+      .map(function (image) {
+         var qa = image.select('pixel_qa');
+         // If the cloud bit (5) is set and the cloud confidence (7) is high
+         // or the cloud shadow bit is set (3), then it's a bad pixel.
+         var cloud = qa.bitwiseAnd(1 << 5)
+         .and(qa.bitwiseAnd(1 << 7))
+         .or(qa.bitwiseAnd(1 << 3));
+         // Remove edge pixels that don't occur in all bands
+         var mask2 = image.mask().reduce(ee.Reducer.min());
+         return image.updateMask(cloud.not()).updateMask(mask2);
+      }),//2013-04-11T00:00:00 - 2021-01-22T00:00:00
+    visParams:{
+        min:300,
+        max:4000,
+        bands:['swir1','nir','red'],
+      },
+    period:{
+      start:2022,
+      end:2023
     }
   },
   sentinel_2:{
@@ -828,7 +881,7 @@ var dataset = {
       },
     period:{
       start:2019,
-      end:2022
+      end:2023
     }
   },
   planet:{
@@ -840,7 +893,7 @@ var dataset = {
       },
     period:{
       start:2016,
-      end:2022
+      end:2023
     }
   },
   
@@ -901,6 +954,14 @@ var dataset = {
     id:'TILE',
     propertie:'SPRNOME',
   },
+  Quadriculas:{
+    feature:ee.FeatureCollection('projects/nexgenmap/SAD_MapBiomas/DL/SHP_grades_BR_35pathces_AllBr')
+      .map(function(feature){return feature.set({
+        'indice': ee.Number.parse(feature.get('indice')),
+        'indice_str': ee.String('').cat(feature.get('indice'))})}),
+      id:'indice',
+      propertie:'indice_str',
+  },
   'Estudo de caso':{
     feature:ee.FeatureCollection("users/Merino/caiman_pol_certo")
       .map(function(feature){return feature.set({
@@ -923,6 +984,7 @@ var dataset = {
   }
 };
 
+// --- --- --- --- DICIONARIO COM ESTILOS DOS WIDGETS DA INTERFACE DE USUARIO
 var styles = {
   comum_panel:{
     stretch:'both',
@@ -1083,6 +1145,7 @@ var styles = {
   }
 };
 
+// ---- --- --- --- PADRONIZAÇÃO DE BANDAS NAS COLEÇÕES DE IMAGENS DE SATELITE
 var bands = {
 // landsat bands -> https://www.usgs.gov/faqs/what-are-best-landsat-spectral-bands-use-my-research?qt-news_science_products=0#qt-news_science_model
   landsat_4:{
@@ -1101,16 +1164,15 @@ var bands = {
     oldBands:["B1","B2",   "B3",   "B4", "B5", "B6",   "B7",   "pixel_qa","B6"],
     newBands:["uv","blue", "green","red","nir","swir1","swir2","pixel_qa","temp"]
   },
+  landsat_9:{
+    oldBands:["B1","B2",   "B3",   "B4", "B5", "B6",   "B7",   "pixel_qa","B6"],
+    newBands:["uv","blue", "green","red","nir","swir1","swir2","pixel_qa","temp"]
+  },
   sentinel_2:{ //S2_SR
     spectralInterval:[''],
     oldBands:['QA60', 'B1', 'B2',   'B3',    'B4',  'B5',  'B6',  'B7', 'B8'  ,  'B8A',  'B9',           'B11',   'B12',  'B12'],
     newBands:['QA60', 'cb', 'blue', 'green', 'red', 'red1','red2','red3','nir'  ,'nir2', 'waterVapor',   'swir1', 'swir2','cloudShadowMask']
   },
-  // sentinel_2:{
-  //   spectralInterval:[''],
-  //   oldBands:['QA60', 'B1', 'B2',   'B3',    'B4',  'B5', 'B6', 'B7', 'B8'  ,'B8A',   'B9',         'B10',  'B11',   'B12',  'B12'],
-  //   newBands:['QA60', 'cb', 'blue', 'green', 'red', 'red1','red2','red3','nir'  ,'nir2', 'waterVapor', 'cirrus','swir1', 'swir2','cloudShadowMask']
-  // },
   terra:{
     spectralInterval:['620–670',     '841–876',     '459–479',     '545–565',     '1230–1250',   '1628–1652',   '2105–2155'],
     oldBands:        ['sur_refl_b01','sur_refl_b02','sur_refl_b03','sur_refl_b04','sur_refl_b05','sur_refl_b06','sur_refl_b07','QA','SolarZenith','ViewZenith','RelativeAzimuth','StateQA','DayOfYear'],
@@ -1131,7 +1193,14 @@ function setLayout (){
   options.mapp = ui.root.widgets().get(0);
   
   options.thumbs = ui.Panel({
-    widgets:[ui.Label('thumbs')],
+    widgets:[0,1,2,3,4,5,6,7,8,9,10,11,12]
+      .map(function(i){
+        return ui.Panel({
+          widgets:[/*ui.Label(''+ i)*/],
+          layout:ui.Panel.Layout.flow('horizontal'),
+          // style:styles.principal_panel
+        });
+      }),
     // layout:ui.Panel.Layout.flow('vertical'),
     // style:styles.principal_panel
   });
@@ -1140,15 +1209,15 @@ function setLayout (){
     layout:ui.Panel.Layout.flow('horizontal'),
     // style:styles.principal_panel
   });
-  options.splitPanel = ui.Panel({
-    widgets:[options.head,options.thumbs],
+  options.secondPanel = ui.Panel({
+    widgets:[options.head/*,options.thumbs*/],
     layout:ui.Panel.Layout.flow('vertical'),
     // style:styles.principal_panel
   });
   
   options.splitPanel = ui.SplitPanel({
     firstPanel:options.mapp,
-    secondPanel:options.splitPanel,
+    secondPanel:options.secondPanel,
     orientation:'horizontal',
     // wipe:,
     style:{}
@@ -1596,7 +1665,7 @@ function subtitle_simbol (simbol,layer){
   });
 }
 
-function plotLayer (layer,obj) {
+function plotLayer (layer,obj,thumbnailCollection) {
   if (obj !== undefined){
     var post_widget = obj.post_widget || undefined; 
     var pre_widget = obj.pre_widget || undefined;
@@ -1618,12 +1687,17 @@ function plotLayer (layer,obj) {
     options.mapp.layers().filter(function(ly){
       return ly.getName().split('-')[0] === name.split('-')[0];
     }).forEach(function(ly){
-      options.mapp.remove(ly);
+      ly
+        .setEeObject(layer['eeObject'])
+        .setVisParams(layer['visParams'])
+        .setName(layer['name']);
     });
     
-    options.mapp.add(ui.Map.Layer(layer));
+    // options.mapp.add(ui.Map.Layer(layer));
     
-    
+    // if (thumbnailCollection !== undefined){
+      plotThumbnail(true,thumbnailCollection);  
+    // }
   }
   
    options.mapp.layers()
@@ -1662,7 +1736,7 @@ function plotLayer (layer,obj) {
       options[properties['sat']] = value;
 
       if (value === true){
-
+        
         options.mapp.layers().filter(function(layer){
           return layer.getName().split('-')[0] === properties['sat'];
         }).map(function(layer){
@@ -1671,6 +1745,8 @@ function plotLayer (layer,obj) {
         
         ui_layer.setShown(true);
         options.mapp.add(ui_layer);
+        
+        plotThumbnail(true,thumbnailCollection)
       } 
       if (value === false){
         options.mapp.layers().filter(function(layer){
@@ -1678,6 +1754,8 @@ function plotLayer (layer,obj) {
         }).map(function(layer){
           return options.mapp.remove(layer);
         });
+        
+        plotThumbnail(false,thumbnailCollection)
       }
     },
     // // disabled:,
@@ -1702,6 +1780,7 @@ function plotLayer (layer,obj) {
   });
   
   options.subtitle.add(panel);
+  
 }
 
 function setSampleGeometry() {
@@ -2217,10 +2296,13 @@ function setSelect(){
 
   options.vector = dataset[options.region_table]['feature']
     .filter(ee.Filter.eq(dataset[options.region_table]['propertie'],options.region));
-  options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id'])
-  options['region-bounds'] = options.vector.geometry().bounds()
 
-  print(options['region-mask'],options['region-bounds'])
+  options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id']);
+  options['region-line'] = ee.Image().paint(options.vector,'vazio',2.5);
+
+  options['region-bounds'] = options.vector.geometry().bounds();
+
+  // print(options['region-mask'],options['region-bounds'])
   
   var select = ui.Select({
     items:options.auxiliar, 
@@ -2253,13 +2335,11 @@ function setSelect(){
       options.vector = dataset[options.region_table]['feature']
         .filter(ee.Filter.eq(dataset[options.region_table]['propertie'],options.region));
         
-      options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id'])
+      options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id']);
       
-      options['region-bounds'] = options.vector.geometry().bounds()
+      options['region-line'] = ee.Image().paint(options.vector,'vazio',2.5);
       
-      options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id'])
-      
-      options['region-bounds'] = options.vector.geometry().bounds()
+      options['region-bounds'] = options.vector.geometry().bounds();
       
       setSubtitle();
             
@@ -2277,15 +2357,16 @@ function setSelect(){
 
               options.vector = dataset[options.region_table]['feature']
                 .filter(ee.Filter.eq(dataset[options.region_table]['propertie'],options.region));
-              options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id'])
-              options['region-bounds'] = options.vector.geometry().bounds()
+              options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id']);
+              options['region-line'] = ee.Image().paint(options.vector,'vazio',2.5);
+              options['region-bounds'] = options.vector.geometry().bounds();
               
               setSubtitle();
               
               options.mapp.centerObject(options.vector.geometry());
         
               options.layerOrCanvas.setLabel('Tela');
-              setThumbs();
+              //setThumbs();
   
          
             },
@@ -2299,7 +2380,7 @@ function setSelect(){
         
         
       options.layerOrCanvas.setLabel('Tela');
-      setThumbs();
+      //setThumbs();
 
       },
     // disabled:,
@@ -2316,14 +2397,15 @@ function setSelect(){
             
             options.vector = dataset[options.region_table]['feature']
               .filter(ee.Filter.eq(dataset[options.region_table]['propertie'],options.region));
-            options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id'])
-            options['region-bounds'] = options.vector.geometry().bounds()
+            options['region-mask'] = ee.Image().paint(options.vector,dataset[options.region_table]['id']);
+            options['region-line'] = ee.Image().paint(options.vector,'vazio',2.5);
+            options['region-bounds'] = options.vector.geometry().bounds();
             
             setSubtitle();
             options.mapp.centerObject(options.vector.geometry());
             
             options.layerOrCanvas.setLabel('Tela');
-            setThumbs();
+            //setThumbs();
   
             // Map.addLayer(options['region-mask'])
             // Map.addLayer(options['region-bounds'])
@@ -2343,16 +2425,14 @@ function setSelect(){
 
 function check_potential_fire_area (value){
             options.potential_area_fire = value;
-            // print(options.potential_area_fire);
-            
-            setThumbs()
-            
-            setSubtitle()
 
+            options.newThumbnails = true;
+            setSubtitle();
+            options.newThumbnails = false;
           }
 
-function setSubtitle() {
-  // --- !! programação orientado a listas !!
+function setSubtitle (){
+  // --- programação orientado a listas
   
   // - limpa o painel para inserir novos valores em pilhas
   options.subtitle.clear();
@@ -2390,6 +2470,7 @@ function setSubtitle() {
       visParams['bands'] = band + options.year;
       // print(visParams)
       var mask = dataset[scar_image]['monthly']['image']
+        .updateMask(options['region-mask']);
 
       if (options.potential_area_fire === true){
         mask = mask.updateMask(dataset['BUFFER-FOCUS']['collection']
@@ -2400,20 +2481,38 @@ function setSubtitle() {
       }
 
       
+      // thumbnail 
+      
+      var thumbnailCollection = [
+        {
+          eeObject:eeObject.updateMask(mask.gte(1)),
+          visParams:visParams,
+          name:scar_image + '-' + model + '-' +  options.region + '-' + options.year,
+        }
+      ];
+      
+      [1,2,3,4,5,6,7,8,9,10,11,12]
+        .forEach(function(month){
+          var mask_temp = mask.eq(month);
+          
+          
+        var thumbLayer = {
+          eeObject:eeObject
+            .updateMask(mask_temp)
+            .set('month',month),
+          visParams:visParams,
+          name:scar_image + '-' + model + '-' +  options.region + '-' + options.year + '-' + month,
+        }
+          thumbnailCollection[month] = thumbLayer; 
+        })
+      
+      // plotLayer       
+
       if (options.month_filter === true){
         
         name = scar_image + '-' + model + '-' +  options.region + '-' + options.year + '-' + options.month;
         
         mask = mask.eq(options.month);
-  
-        if (options.potential_area_fire === true){
-          mask = mask.updateMask(dataset['BUFFER-FOCUS']['collection']
-          .filter(ee.Filter.eq('year',options.year))
-          .filter(ee.Filter.eq('month',options.month))
-          .mosaic()
-          .eq(options.month))
-        }
-
         
         eeObject = eeObject.updateMask(mask) 
       }
@@ -2441,9 +2540,11 @@ function setSubtitle() {
       plotLayer(layer,{
         // post_widget:post_widget,
         pre_widget:subtitle_simbol('▉',layer), //-> caracteres especiais ->https://economaster.com.br/textual-master/caracteres-especiais/
-      });
+      },thumbnailCollection);
+      
 
     }
+  
     options.models.forEach(model_plot);
   }  
 
@@ -2471,7 +2572,72 @@ function setSubtitle() {
         
       var start = '' + options.year + '-01-01';
       var end = '' + (options.year + 1) + '-01-01';
+      
+      var regionMask = options['region-mask']
+      
+      if (options.potential_area_fire === true){
+        regionMask = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
+          .filterDate(start,end)
+          .mosaic());
+      }
+      
+      
+    // thumbnail 
+      
+      var thumbnailCollection = [
+        {
+          eeObject:dataset[col]['collection']
+          .filterDate(start,end)
+          .select(bands[col]['oldBands'],bands[col]['newBands'])
+          .map(function(image){
+            return image.normalizedDifference(['nir','swir1']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-burn-ratio
+              .multiply(-1)
+              .rename('nbr')
+              .addBands(image);
+          }).qualityMosaic('nbr')
+          .updateMask(regionMask),
+          visParams:visParams,
+          name:name,
+        }
+      ];
+      
+      
+      
+      [1,2,3,4,5,6,7,8,9,10,11,12]
+        .forEach(function(month){
+          var name_temp = col + '-' + options.region + '-' + options.year + '-' + month;
+        
+          var start_temp = '' + options.year + '-' + month + '-01';
+          var end_temp = '' + options.year + '-' + (month + 1) + '-01';
+          
+          if (month === 12){
+            end_temp = '' + (options.year + 1) + '-01-01';
+          };
+  
+        var regionMask_temp = regionMask;
 
+        if (options.potential_area_fire === true){
+          regionMask_temp = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
+            .filterDate(start_temp,end_temp)
+            .mosaic());
+        }
+        
+        var thumbLayer = {
+          eeObject:dataset[col]['collection']
+          .filterDate(start_temp,end_temp)
+          .select(bands[col]['oldBands'],bands[col]['newBands'])
+          .map(function(image){
+            return image.normalizedDifference(['nir','swir1']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-burn-ratio
+              .multiply(-1)
+              .rename('nbr')
+              .addBands(image);
+          }).qualityMosaic('nbr')
+          .updateMask(regionMask_temp),
+          visParams:visParams,
+          name: col + '-' + options.region + '-' + options.year + '-' + month,
+        }
+          thumbnailCollection[month] = thumbLayer; 
+        })
 
       if (options.month_filter === true){
         name = col + '-' + options.region + '-' + options.year + '-' + options.month;
@@ -2484,6 +2650,13 @@ function setSubtitle() {
         }
       }
       
+      if (options.potential_area_fire === true){
+          regionMask = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
+            .filterDate(start,end)
+            .mosaic());
+      }
+
+      
       var eeObject = dataset[col]['collection']
         .filterDate(start,end)
         .select(bands[col]['oldBands'],bands[col]['newBands'])
@@ -2494,14 +2667,7 @@ function setSubtitle() {
             .addBands(image);
         }).qualityMosaic('nbr');
       
-      var regionMask = options['region-mask']
-      
-      if (options.potential_area_fire === true){
-          regionMask = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
-            .filterDate(start,end)
-            .mosaic());
-      }
-      
+ 
       
       var layer = 
       // ui.Map.Layer( // manter como omples
@@ -2554,7 +2720,7 @@ function setSubtitle() {
       plotLayer(layer,{
         post_widget:samples_export_button(layer),
         // pre_widget:buttons,
-      });
+      },thumbnailCollection);
     }
   
   // - plote de coleções de dados de produtos de area queimada 
@@ -2581,7 +2747,62 @@ function setSubtitle() {
         
       var start = '' + options.year + '-01-01';
       var end = '' + (options.year + 1) + '-01-01';
+      
+      var regionMask = options['region-mask']
+      if (options.potential_area_fire === true){
+          regionMask = dataset['BUFFER-FOCUS']['collection']
+            .filterDate(start,end)
+            .mosaic()
+            .updateMask(regionMask);
+      }
 
+      
+      // thumbnail 
+      
+      var thumbnailCollection = [
+        {
+          eeObject:dataset[col]['collection']
+          .filterDate(start,end)
+          .mosaic()
+          .updateMask(regionMask),
+          visParams:visParams,
+          name:name,
+        }
+      ];
+      
+      
+      
+      [1,2,3,4,5,6,7,8,9,10,11,12]
+        .forEach(function(month){
+          var name_temp = col + '-' + options.region + '-' + options.year + '-' + month;
+        
+          var start_temp = '' + options.year + '-' + month + '-01';
+          var end_temp = '' + options.year + '-' + (month + 1) + '-01';
+          
+          if (month === 12){
+            end_temp = '' + (options.year + 1) + '-01-01';
+          };
+          
+        var regionMask_temp = regionMask;
+
+        if (options.potential_area_fire === true){
+          regionMask_temp = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
+            .filterDate(start_temp,end_temp)
+            .mosaic());
+        }
+
+          
+        var thumbLayer = {
+          eeObject:dataset[col]['collection']
+          .filterDate(start_temp,end_temp)
+          .mosaic()
+          .updateMask(regionMask_temp),
+          visParams:visParams,
+          name: col + '-' + options.region + '-' + options.year + '-' + month,
+        }
+          thumbnailCollection[month] = thumbLayer; 
+        })
+      
 
       if (options.month_filter === true){
         name = col + '-' + options.region + '-' + options.year + '-' + options.month;
@@ -2594,6 +2815,14 @@ function setSubtitle() {
         }
       }
       
+      if (options.potential_area_fire === true){
+          regionMask = dataset['BUFFER-FOCUS']['collection']
+            .filterDate(start,end)
+            .mosaic()
+            .updateMask(regionMask);
+      }
+
+            
       eeObject = dataset[col]['collection']
         .filterDate(start,end)
         .mosaic();
@@ -2610,14 +2839,6 @@ function setSubtitle() {
         })
       }
 
-      var regionMask = options['region-mask']
-      if (options.potential_area_fire === true){
-          regionMask = dataset['BUFFER-FOCUS']['collection']
-            .filterDate(start,end)
-            .mosaic()
-            .updateMask(regionMask);
-      }
-      
       var layer ={
         eeObject:eeObject
           .updateMask(regionMask)
@@ -2651,7 +2872,7 @@ function setSubtitle() {
       plotLayer(layer,{
         post_widget:post_widget,
         pre_widget:subtitle_simbol('▉',layer), //-> caracteres especiais ->https://economaster.com.br/textual-master/caracteres-especiais/
-      });
+      },thumbnailCollection);
     }
   
   // - plote das camadas de localização
@@ -2675,6 +2896,15 @@ function setSubtitle() {
       }),
       name:'Limites-' + line + '-' + options.region_table,
       visParams:{palette:['808080']},
+    },
+    'Quadriculas':{
+      image:ee.Image().paint({
+        featureCollection:dataset['Quadriculas']['feature'].filterBounds(options.vector),
+        color:dataset['Quadriculas']['id'], 
+        width:0.25
+      }),
+      name:'Quadriculas-' + line + '-'  + options.region,
+      visParams:{palette:['000000']},
     },
     'square':{
       image:ee.Image().paint({
@@ -2804,8 +3034,6 @@ function setSubtitle() {
       });
     }
   
-  
-  
   // --- Executando os plotes em função das listas organizadas
   options.region_vis.forEach(region_vis_plot);
   
@@ -2821,660 +3049,193 @@ function setSubtitle() {
   
 }
 
-function setThumbs(){
-  
-    options.thumbs.clear();
+function plotThumbnail (boolean,collectionThumbnail){
+    
     
     if (options.openThumbs.getLabel() === 'Abrir thumbnails'){
-      return
-    }
+      return 
+    };
     
-    var geom ;
+    if (collectionThumbnail === undefined){
+      return 
+    };
+    
+    var geom;
 
     if ( options.layerOrCanvas.getLabel() !== 'Camada'){
       geom = options.vector.geometry().bounds()
     } else {
       geom = ee.Geometry.Rectangle(options.mapp.getBounds())
     }
+    
+    var widgets_list = options.thumbs.widgets();
+    
+    if (options.newThumbnails === true){
+        options['panelThumbnail'+collectionThumbnail[0]['name']].forEach(function(thumb){
+        widgets_list
+          .get(options['panelThumbnail'+collectionThumbnail[0]['name']].indexOf(thumb))
+          .remove(thumb)
+    });
   
-    // - plote de coleções de dados de produtos de area queimada 
-    var months = [1,2,3,4,5,6,7,8,9,10,11,12];
+      options['panelThumbnail'+collectionThumbnail[0]['name']] = undefined;
+    };
     
-    // annual
-    var panel_thumbnails = ui.Panel({
-      widgets:ui.Panel({
-        widgets:[],
-        // layout:ui.Panel.Layout.flow('horizontal'),
-        // style:
-      }),
-      // layout:, 
-      style:{}
-    })
     
-    panel_thumbnails.setLayout(ui.Panel.Layout.flow('horizontal'));
+    if (options['panelThumbnail'+collectionThumbnail[0]['name']] === undefined){
+      
+      options['panelThumbnail'+collectionThumbnail[0]['name']] = collectionThumbnail.map( function (thumbnail){
     
-    options.collection_sr.forEach(function  (col){
-         
-        // print(col,dataset[col])
-        var period = dataset[col]['period'];
-        if (options.year <= period['end']) {
-          if (options.year >= period['start']) {
-            // print ('Layer adicionada ' + scar_image + '-' + model + '-' + options.year);
-          } else {
-          // print ('não exite dados ' + scar_image + '-' + model + '-' + options.year);
-          return ;
-    
-          }
-        }else {
-          return ;
-        }
-        
-        var name = col + '-' + options.region + '-' + options.year;
-          
-        var start = '' + options.year + '-01-01';
-        var end = '' + (options.year + 1) + '-01-01'
-  
-        var visParams = dataset[col]['visParams']
-        
-        var regionMask = options['region-mask']
-      
-        if (options.potential_area_fire === true){
-          regionMask = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
-            .filterDate(start,end)
-            .mosaic());
-        }
-
-        
-        var eeObject = dataset[col]['collection']
-          .filterDate(start,end)
-          .select(bands[col]['oldBands'],bands[col]['newBands'])
-          .map(function(image){
-            return image.normalizedDifference(['nir','swir1']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-burn-ratio
-              .multiply(-1)
-              .rename('nbr')
-              .addBands(image);
-          })
-          .qualityMosaic('nbr')
-          .updateMask(regionMask);
-          
-        if (col === 'planet') {
-          return ; // cancelando o planet
-          
-            eeObject = dataset[col]['collection']
-              .filterDate(start,end)
-              .select(bands[col]['oldBands'],bands[col]['newBands'])
-              .map(function(image){
-                return image.normalizedDifference(['nir','red']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-difference-vegetation-index?qt-science_support_page_related_con=0#qt-science_support_page_related_con
-                  .multiply(-1)
-                  .rename('ndvi')
-                  .addBands(image);
-              }).qualityMosaic('ndvi')
-              .updateMask(regionMask);
-        }
-      
-      
-      
-        // print(options['region-mask'])
-        
-        var layer_obj = {
-          eeObject:eeObject
-          .set({
-            start:period['start'],
-            end:period['end'],
-          }),
-          visParams:visParams,
-          name:name,
-          shown:true,
-          opacity:0.9
-        };
-        
-        var layer = ui.Map.Layer(layer_obj);
-        
-        var title  = ui.Checkbox({
-          label:name,
-          value:options[name] || false,
-          onChange:function(value){
+            var layer_obj = {
+              eeObject:thumbnail['eeObject'],
+              visParams:thumbnail['visParams'],
+              name:thumbnail['name'],
+              shown:true,
+              opacity:0.9
+            };
             
-            if (value === true){
-              options[name] = true
-              options.mapp.add(layer);
-
-            } else {
-              options[name] = false
-              options.mapp.remove(layer);
-            }
-          },
-          style:styles.titleCheckbox
-        });
-       
-        var reload = ui.Button({
-          label:'↻',
-          onClick:function(){
-            print('↻')
-          },
-          // disabled:,
-          style:styles.buttonThumbnail,
-          // imageUrl:
-        });
-        
-        var geotiff = ui.Button({
-          label:'export',
-          onClick:function(){
-            exporting_mosaic(layer_obj);
-          },
-          // disabled:,
-          style:styles.buttonThumbnail,
-          // imageUrl:
-        });
-       
-        var options_panel = ui.Panel({
-          widgets:[
-            title,
-            reload,
-            geotiff,
-          ],
-          layout:ui.Panel.Layout.flow('horizontal'),
-          style:styles.options_panel
-        })
-        
-        var thumbnail = ui.Thumbnail({
-          image:eeObject
-              .visualize(visParams),
-            params:{
-              dimensions:options.dimensions,
-              region:geom,
-            },
-            onClick:function(){
-              print(name)
-
-            },
-            style:{
-              backgroundColor:'fffbfb'
-            }
-          });
-        
-        var panel_thumbs = ui.Panel({
-          widgets:[
-            options_panel,
-            thumbnail,
-
-          ],
-          layout:ui.Panel.Layout.flow('vertical'), 
-            // style:,
-          })
-        
-        panel_thumbnails.add(panel_thumbs);
-        // panel_thumbs.insert(1,thumbnail);
-        
-        reload.onClick(function(){
-          panel_thumbs.remove(thumbnail);
-          
-          thumbnail = ui.Thumbnail({
-            image:eeObject
-                .visualize(visParams),
-              params:{
-                dimensions:options.dimensions,
-                region:geom,
-              },
-              onClick:function(){
-                print(name)
-  
-                if (options[name + '*thumbnail'] === true){
-                  options[name + '*thumbnail'] = false
-                  options.mapp.remove(layer);
+            // print(layer_obj)
+            var layer = ui.Map.Layer(layer_obj);
+            
+            var title  = ui.Checkbox({
+              label:layer_obj['name'],
+              value:options['thumbnail-'+layer_obj['name']] || false,
+              onChange:function(value){
+                
+                if (value === true){
+                  options['thumbnail-'+layer_obj['name']] = true
+                  options.mapp.add(layer);
+    
                 } else {
-                options[name + '*thumbnail'] = true
-                options.mapp.add(layer);
+                  options['thumbnail-'+layer_obj['name']] = false
+                  options.mapp.remove(layer);
                 }
               },
-              style:{
-                backgroundColor:'fffbfb'
-              }
-          });
-          
-          panel_thumbs.insert(1,thumbnail);
-          
-        });
-
-      })
-    
-    options.thumbs.add(panel_thumbnails);
- 
-    
-    // monthly   
-    months.forEach(function(month){
-  
-      var panel_thumbnails = ui.Panel({
-        widgets:ui.Panel({
-          widgets:[],
-          // layout:ui.Panel.Layout.flow('horizontal'),
-          // style:
-        }),
-        // layout:, 
-        style:{}
-      })
-      panel_thumbnails.setLayout(ui.Panel.Layout.flow('horizontal'));
-      
-      options.collection_sr.forEach(function  (col){
-           
-          // print(col,dataset[col])
-          var period = dataset[col]['period'];
-          if (options.year <= period['end']) {
-            if (options.year >= period['start']) {
-              // print ('Layer adicionada ' + scar_image + '-' + model + '-' + options.year);
-            } else {
-            // print ('não exite dados ' + scar_image + '-' + model + '-' + options.year);
-            return ;
-      
-            }
-          }else {
-            return ;
-          }
-          
-          var start = '' + options.year + '-' + month + '-01';
-          var end = '' + options.year + '-'+ (month + 1) + '-01'
-    
-          if (month === 12){
-            end = '' + (options.year + 1) + '-01-01';
-          }
-          
-          var name = col + '-' + options.region + '-' + options.year + '-' + month;
-          
-          if(month < 10){
-            name = col + '-' + options.region + '-' + options.year + '-0' + month;
-          }
-          
-          var visParams = dataset[col]['visParams']
-          
-          var regionMask = options['region-mask']
-        
-          if (options.potential_area_fire === true){
-            regionMask = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
-              .filterDate(start,end)
-              .mosaic());
-          }
-  
-          
-          var eeObject = dataset[col]['collection']
-            .filterDate(start,end)
-            .select(bands[col]['oldBands'],bands[col]['newBands'])
-            .map(function(image){
-              return image.normalizedDifference(['nir','swir1']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-burn-ratio
-                .multiply(-1)
-                .rename('nbr')
-                .addBands(image);
-            })
-            .qualityMosaic('nbr')
-            .updateMask(regionMask);
-          
-          if (col === 'planet') {
-            return ; // cancelando o planet
-            
-              eeObject = dataset[col]['collection']
-                .filterDate(start,end)
-                .select(bands[col]['oldBands'],bands[col]['newBands'])
-                .map(function(image){
-                  return image.normalizedDifference(['nir','red']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-difference-vegetation-index?qt-science_support_page_related_con=0#qt-science_support_page_related_con
-                    .multiply(-1)
-                    .rename('ndvi')
-                    .addBands(image);
-                }).qualityMosaic('ndvi')
-                .updateMask(regionMask);
-          }
-        
-        var layer_obj = {
-          eeObject:eeObject
-          .set({
-            start:period['start'],
-            end:period['end'],
-          }),
-          visParams:visParams,
-          name:name,
-          shown:true,
-          opacity:0.9
-        };
-        
-        var layer = ui.Map.Layer(layer_obj);
-        
-          // print(options['region-mask'])
-          var title  = ui.Checkbox({
-            label:name,
-            value:options[name] || false,
-            onChange:function(value){
-              
-              if (value === true){
-                options[name] = true
-                options.mapp.add(layer);
-  
-              } else {
-                options[name] = false
-                options.mapp.remove(layer);
-              }
-            },
-            style:styles.titleCheckbox
-          });
-         
-          var reload = ui.Button({
-            label:'↻',
-            onClick:function(){
-              print('↻')
-            },
-            // disabled:,
-            style:styles.buttonThumbnail,
-            // imageUrl:
-          })
-          var geotiff = ui.Button({
-            label:'export',
-            onClick:function(){
-              exporting_mosaic(layer_obj);
-            },
-            // disabled:,
-            style:styles.buttonThumbnail,
-            // imageUrl:
-          })
-         
-          var options_panel = ui.Panel({
-            widgets:[
-              title,
-              reload,
-              geotiff,
-            ],
-            layout:ui.Panel.Layout.flow('horizontal'),
-            style:styles.options_panel
-          })
-          
-          var thumbnail = ui.Thumbnail({
-            image:eeObject
-                .visualize(visParams),
-              params:{
-                dimensions:options.dimensions,
-                region:geom,
-              },
-              onClick:function(){
-                print(name)
-  
-                if (options[name + '*thumbnail'] === true){
-                  options[name + '*thumbnail'] = false
-                  options.mapp.remove(layer);
-                } else {
-                options[name + '*thumbnail'] = true
-                options.mapp.add(layer);
-                }
-              },
-              style:{
-                backgroundColor:'fffbfb'
-              }
+              style:styles.titleCheckbox
             });
-          
-          var panel_thumbs = ui.Panel({
-            widgets:[
-              // title,
-              options_panel,
-              thumbnail,
-            ],
-            layout:ui.Panel.Layout.flow('vertical'), 
-              // style:,
-            })
-          
-          panel_thumbnails.add(panel_thumbs);
-          
-          reload.onClick(function(){
-            panel_thumbs.remove(thumbnail);
+           
+            var reload = ui.Button({
+              label:'↻',
+              onClick:function(){
+                print('↻')
+              },
+              // disabled:,
+              style:styles.buttonThumbnail,
+              // imageUrl:
+            });
             
-            thumbnail = ui.Thumbnail({
-              image:eeObject
-                  .visualize(visParams),
+            var geotiff = ui.Button({
+              label:'export',
+              onClick:function(){
+                exporting_mosaic(layer_obj);
+              },
+              // disabled:,
+              style:styles.buttonThumbnail,
+              // imageUrl:
+            });
+           
+            var options_panel = ui.Panel({
+              widgets:[
+                title,
+                reload,
+                geotiff,
+              ],
+              layout:ui.Panel.Layout.flow('horizontal'),
+              style:styles.options_panel
+            })
+            
+            var thumbnail = ui.Thumbnail({
+              image:layer_obj['eeObject']
+                  .visualize(layer_obj['visParams'])
+                  .blend(options['region-line'].visualize({palette:'000000'})),
                 params:{
                   dimensions:options.dimensions,
                   region:geom,
                 },
                 onClick:function(){
-                  print(name)
+                  print(layer_obj['name'])
     
-                  if (options[name + '*thumbnail'] === true){
-                    options[name + '*thumbnail'] = false
-                    options.mapp.remove(layer);
-                  } else {
-                  options[name + '*thumbnail'] = true
-                  options.mapp.add(layer);
-                  }
                 },
                 style:{
                   backgroundColor:'fffbfb'
                 }
-            });
+              });
             
-            panel_thumbs.insert(1,thumbnail);
-            
-            
-          });
-         
-        })
-      
-      options.thumbs.add(panel_thumbnails);
-  
-    })  
+            var panel_thumbs = ui.Panel({
+              widgets:[
+                options_panel,
+                thumbnail,
     
-    months.forEach(function(month){
-  
-      var panel_thumbnails = ui.Panel({
-        widgets:ui.Panel({
-          widgets:[],
-          // layout:ui.Panel.Layout.flow('horizontal'),
-          // style:
-        }),
-        // layout:, 
-        style:{}
-      })
-      panel_thumbnails.setLayout(ui.Panel.Layout.flow('horizontal'));
-      
-      options.collection_sr.forEach(function  (col){
-           
-          // print(col,dataset[col])
-          var period = dataset[col]['period'];
-          if (options.year <= period['end']) {
-            if (options.year >= period['start']) {
-              // print ('Layer adicionada ' + scar_image + '-' + model + '-' + options.year);
-            } else {
-            // print ('não exite dados ' + scar_image + '-' + model + '-' + options.year);
-            return ;
-      
-            }
-          }else {
-            return ;
-          }
-          
-          var start = '' + options.year + '-' + month + '-01';
-          var end = '' + options.year + '-'+ (month + 1) + '-01'
-    
-          if (month === 12){
-            end = '' + (options.year + 1) + '-01-01';
-          }
-          
-          var name = col + '-' + options.region + '-' + options.year + '-' + month;
-          
-          if(month < 10){
-            name = col + '-' + options.region + '-' + options.year + '-0' + month;
-          }
-          
-          var visParams = dataset[col]['visParams']
-          
-          var regionMask = options['region-mask']
-        
-          if (options.potential_area_fire === true){
-            regionMask = regionMask.updateMask(dataset['BUFFER-FOCUS']['collection']
-              .filterDate(start,end)
-              .mosaic());
-          }
-  
-          
-          var eeObject = dataset[col]['collection']
-            .filterDate(start,end)
-            .select(bands[col]['oldBands'],bands[col]['newBands'])
-            .map(function(image){
-              return image.normalizedDifference(['nir','swir1']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-burn-ratio
-                .multiply(-1)
-                .rename('nbr')
-                .addBands(image);
-            })
-            .qualityMosaic('nbr')
-            .updateMask(regionMask);
-          
-          if (col === 'planet') {
-            return ; // cancelando o planet
+              ],
+              layout:ui.Panel.Layout.flow('vertical'), 
+                // style:,
+              })
             
-              eeObject = dataset[col]['collection']
-                .filterDate(start,end)
-                .select(bands[col]['oldBands'],bands[col]['newBands'])
-                .map(function(image){
-                  return image.normalizedDifference(['nir','red']) // https://www.usgs.gov/core-science-systems/nli/landsat/landsat-normalized-difference-vegetation-index?qt-science_support_page_related_con=0#qt-science_support_page_related_con
-                    .multiply(-1)
-                    .rename('ndvi')
-                    .addBands(image);
-                }).qualityMosaic('ndvi')
-                .updateMask(regionMask);
-          }
-        
-        var layer_obj = {
-          eeObject:eeObject
-          .set({
-            start:period['start'],
-            end:period['end'],
-          }),
-          visParams:visParams,
-          name:name,
-          shown:true,
-          opacity:0.9
-        };
-        
-        var layer = ui.Map.Layer(layer_obj);
-        
-          // print(options['region-mask'])
-          var title  = ui.Checkbox({
-            label:name,
-            value:options[name] || false,
-            onChange:function(value){
+
+            reload.onClick(function(){
+              panel_thumbs.remove(thumbnail);
               
-              if (value === true){
-                options[name] = true
-                options.mapp.add(layer);
-  
-              } else {
-                options[name] = false
-                options.mapp.remove(layer);
-              }
-            },
-            style:styles.titleCheckbox
-          });
-         
-          var reload = ui.Button({
-            label:'↻',
-            onClick:function(){
-              print('↻')
-            },
-            // disabled:,
-            style:styles.buttonThumbnail,
-            // imageUrl:
-          })
-          var geotiff = ui.Button({
-            label:'export',
-            onClick:function(){
-              exporting_mosaic(layer_obj);
-            },
-            // disabled:,
-            style:styles.buttonThumbnail,
-            // imageUrl:
-          })
-         
-          var options_panel = ui.Panel({
-            widgets:[
-              title,
-              reload,
-              geotiff,
-            ],
-            layout:ui.Panel.Layout.flow('horizontal'),
-            style:styles.options_panel
-          })
-          
-          var thumbnail = ui.Thumbnail({
-            image:eeObject
-                .visualize(visParams),
-              params:{
-                dimensions:options.dimensions,
-                region:geom,
-              },
-              onClick:function(){
-                print(name)
-  
-                if (options[name + '*thumbnail'] === true){
-                  options[name + '*thumbnail'] = false
-                  options.mapp.remove(layer);
-                } else {
-                options[name + '*thumbnail'] = true
-                options.mapp.add(layer);
-                }
-              },
-              style:{
-                backgroundColor:'fffbfb'
-              }
-            });
-          
-          var panel_thumbs = ui.Panel({
-            widgets:[
-              // title,
-              options_panel,
-              thumbnail,
-            ],
-            layout:ui.Panel.Layout.flow('vertical'), 
-              // style:,
-            })
-          
-          panel_thumbnails.add(panel_thumbs);
-          
-          reload.onClick(function(){
-            panel_thumbs.remove(thumbnail);
-            
-            thumbnail = ui.Thumbnail({
-              image:eeObject
-                  .visualize(visParams),
-                params:{
-                  dimensions:options.dimensions,
-                  region:geom,
-                },
-                onClick:function(){
-                  print(name)
-    
-                  if (options[name + '*thumbnail'] === true){
-                    options[name + '*thumbnail'] = false
-                    options.mapp.remove(layer);
-                  } else {
-                  options[name + '*thumbnail'] = true
-                  options.mapp.add(layer);
+              thumbnail = ui.Thumbnail({
+                image:layer_obj['eeObject']
+                  .visualize(layer_obj['visParams'])
+                  .blend(options['region-line'].visualize({palette:'000000'})),
+                  params:{
+                    dimensions:options.dimensions,
+                    region:geom,
+                  },
+                  // onClick:,
+                  style:{
+                    backgroundColor:'fffbfb'
                   }
-                },
-                style:{
-                  backgroundColor:'fffbfb'
-                }
+              });
+              
+              panel_thumbs.insert(1,thumbnail);
+              
             });
             
-            panel_thumbs.insert(1,thumbnail);
-            
-            
-          });
-         
-        })
+            return panel_thumbs;
+        
+      });
+    
+    }
+    
+    
+    var ploted_thumbs = widgets_list.get(0).widgets();
+    
+    ploted_thumbs.forEach(function(ploted_thumb){
       
-      options.thumbs.add(panel_thumbnails);
-  
-    })  
-  
+      // print(collectionThumbnail[0]['name'].split('-')[0], ploted_thumb.widgets().get(0).widgets().get(0).getLabel().split('-')[0], collectionThumbnail[0]['name'].split('-')[0] === ploted_thumb.widgets().get(0).widgets().get(0).getLabel().split('-')[0])
+      if(collectionThumbnail[0]['name'].split('-')[0] === ploted_thumb.widgets().get(0).widgets().get(0).getLabel().split('-')[0]){
+        options['panelThumbnail'+ ploted_thumb.widgets().get(0).widgets().get(0).getLabel()].forEach(function(thumb){
+        widgets_list
+          .get(options['panelThumbnail'+ploted_thumb.widgets().get(0).widgets().get(0).getLabel()].indexOf(thumb))
+          .remove(thumb)
+        })
+      };
+    });
+    
+    if (boolean === true){
+      
+      options['panelThumbnail'+collectionThumbnail[0]['name']].forEach(function(thumb){
+        widgets_list
+          .get(options['panelThumbnail'+collectionThumbnail[0]['name']].indexOf(thumb))
+          .add(thumb)
+      });
+
+    };
+  //   if (boolean === false){
+  //     options['panelThumbnail'+collectionThumbnail[0]['name']].forEach(function(thumb){
+  //       widgets_list
+  //         .get(options['panelThumbnail'+collectionThumbnail[0]['name']].indexOf(thumb))
+  //         .remove(thumb)
+  //   });
+  // }
 }
-
+  
 function onClickThumbs (){
     
     if (options.openThumbs.getLabel() === 'Fechar thumbnails'){
       options.openThumbs.setLabel('Abrir thumbnails');
-      options.thumbs.clear();
+      options.secondPanel.remove(options.thumbs);
       options.head.remove(options.layerOrCanvas);
       options.head.remove(options.textboxDimensions);
 
@@ -3483,12 +3244,14 @@ function onClickThumbs (){
     } else {
       options.openThumbs.setLabel('Fechar thumbnails');
 
-      options.thumbs.add(ui.Label('Monthly images'));
+      // options.thumbs.add(ui.Label('Monthly images'));
       
       options.head.insert(1,options.textboxDimensions);
       options.head.insert(1,options.layerOrCanvas);
-
-      setThumbs()
+      
+      options.secondPanel.add(options.thumbs);
+      
+      setSubtitle();
       return ;
     }
   }
@@ -3501,7 +3264,10 @@ function onChangeoTextboxDimensions (value){
     
     options.dimensions = value
     
-    setThumbs()
+    
+    options.newThumbnails = true;
+    setSubtitle();
+    options.newThumbnails = false;
 
   }
 
@@ -3510,15 +3276,20 @@ function onClickLayerOrCanvas (){
     if (options.layerOrCanvas.getLabel() === 'Camada'){
       options.layerOrCanvas.setLabel('Tela');
      
-      setThumbs();
-      
+      options.newThumbnails = true;
+      setSubtitle();
+      options.newThumbnails = false;
+
       return ;
     } else {
       options.layerOrCanvas.setLabel('Camada');
 
-      options.thumbs.add(ui.Label('Monthly images'));
+      // options.thumbs.add(ui.Label('Monthly images'));
       
-      setThumbs()
+      options.newThumbnails = true;
+      setSubtitle();
+      options.newThumbnails = false;
+      
       return ;
     }
   }
@@ -3537,7 +3308,7 @@ function setWidgets(){
       setSubtitle();
       
       options.layerOrCanvas.setLabel('Tela');
-      setThumbs();
+      //setThumbs();
 
     },
     // direction:,
